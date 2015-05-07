@@ -1,0 +1,213 @@
+<!-- Game Design Project #3 ~ Super Pipe Example Level 3 -->
+<!-- Copyright (c) 2015 Simply Coding see LICENSE for usage information -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <title> Super Pipe Example </title>
+
+    <script src="simply.js"> </script>
+    <script>
+
+function start()
+{
+  var canJump = true, jumpPower = 10;
+  var score = 0;
+	var level = [ ];
+
+	sjs.open("target", 800, 500);
+
+	sjs.makeStage("design");
+
+	var background = new sjs.Image("images/field.jpg");
+	background.setSize(2500,sjs.getHeight());
+
+	var player = new sjs.Image("images/guy_left.png", 48, 66);
+	player.type="player";
+
+	player.setGravity();
+	player.setHFlipImages('images/guy_left.png', 'images/guy_right.png');
+
+	sjs.scrollable(player,background);
+
+	sjs.keyDown(LEFT_KEY, function(){player.faceLeft();   player.pushLeft(.5);});
+	sjs.keyDown(RIGHT_KEY, function(){player.faceRight(); player.pushRight(.5);});
+
+	sjs.keyDown(UP_KEY, function(){
+          if(canJump){
+            player.pushUp(jumpPower);
+            canJump=false;
+            setTimeout(function(){canJump=true;},1000);
+          }
+        });
+
+  // Level 3 content
+
+	var platform = new sjs.Image("images/platform.png");
+	platform.type="platform";
+	platform.draggable();
+	platform.bottom().offset(120,-50);
+	sjs.onHit("player","platform", sjs.stoppedBy,0,["design","game"]);
+
+	var star = new sjs.Image("images/star.png");
+	star.type="star";	
+	star.draggable();
+	star.moveTo(200,370);
+	sjs.onHit("player","star", function(p,s){
+		s.friction = .1;
+		s.pushUp(2).pushRight(.1);
+		setTimeout(function(){s.destroy();},500);
+		jumpPower = 16;
+		setTimeout(function(){jumpPower=10;},3000);
+	},0,"game");
+
+  platform.fixed=true;
+  platform.moveTo(120,40);
+    platform.onMouseDown(function(){
+     var newPlatform = new sjs.Image("images/platform.png");
+     level.push(newPlatform);
+     newPlatform.type="platform";
+     newPlatform.moveTo(platform.getX(),platform.getY());
+     newPlatform.draggable();
+     newPlatform.follow(sjs.mouse);
+  });
+
+  star.fixed=true;
+  star.moveTo(300,40);
+  star.onMouseDown(function(){
+     var newStar = new sjs.Image("images/star.png");
+     level.push(newStar);
+     newStar.type="star";
+     newStar.moveTo(star.getX(),star.getY());
+     newStar.draggable();
+     newStar.follow(sjs.mouse);
+  });
+
+  var coin = new sjs.Image("images/coin.gif");
+  coin.fixed=true;
+  coin.moveTo(380,40);
+  coin.onMouseDown(function(){
+     var newCoin = new sjs.Image("images/coin.gif");
+     level.push(newCoin);
+     newCoin.type="coin";
+     newCoin.moveTo(coin.getX(),coin.getY());
+     newCoin.draggable();
+     newCoin.follow(sjs.mouse);
+  });
+  sjs.onHit("player","coin",function(player,coin){score=score+1;
+  score_obj.setText("Score: "+score);coin.destroy();},0,"game");
+
+  var pig = new sjs.Image("images/pig_left.png");
+  pig.fixed=true;
+  pig.moveTo(450,40);
+  pig.onMouseDown(function(){
+     var newpig = new sjs.Image("images/pig_left.png");
+     level.push(newpig);
+     newpig.type="pig";
+     newpig.moveTo(pig.getX(),pig.getY());
+     newpig.friction=0;
+     newpig.noBounds=true;
+     newpig.setHFlipImages("images/pig_left.png","images/pig_right.png");
+     newpig.onMouseUp(function(){newpig.unfollow(); newpig.setGravity(); newpig.pushHFacing(); });
+     newpig.onMouseDown(function(){newpig.follow(sjs.mouse); newpig.removeGravity(); newpig.stop(); });
+     newpig.follow(sjs.mouse);
+  });
+  sjs.onHit("pig",["bottom_screen","top_screen"],sjs.stoppedBy,0,["game","design"]);
+  sjs.onHit("pig",["left_screen","right_screen"],sjs.bounceOff,0,["game","design"]);
+  sjs.onHit("pig","platform",function(pig,platform){
+     if(!pig.isAboveOf(platform))sjs.bounceOff(pig,platform);
+     else sjs.stoppedBy(pig,platform);},0,["game","design"]);
+  sjs.onHit("player","pig",function(p,pig){ 
+     if(player.isAboveOf(pig,.15)){if(player.sy>0)player.pushUp(14);pig.destroy();}
+     else sjs.setStage("gameover"); },.1,"game");
+
+  var flag = new sjs.Image("images/flag.png");
+  flag.fixed=true;
+  flag.moveTo(550,40);
+  flag.onMouseDown(function(){
+     var newflag = new sjs.Image("flag.png");
+     level.push(newflag);
+     newflag.type="flag";
+     newflag.moveTo(flag.getX(),flag.getY());
+     newflag.draggable();
+     newflag.follow(sjs.mouse);
+  });
+  var trash = new sjs.Image("trash.png",40,50);
+  trash.fixed=true;
+  trash.type="trash";
+  trash.right();
+  sjs.onHit("trash",["platform","star","coin","pig","flag"],function(t,x){
+     sjs.removeFromArray(level,x);
+     x.destroy();
+  });
+
+  var menuBtn = new sjs.Button("Menu", function(){sjs.setStage("menu");});
+  menuBtn.offset(10,30);
+
+  sjs.makeStage("menu");
+
+  var title = new sjs.Text("Super Pipe Example",28, "blue");
+  title.centerH();
+
+  var designBtn = new sjs.Button("Design Mode", function(){ sjs.setStage("design"); });
+  designBtn.center();
+
+  var playBtn = new sjs.Button("Play",function(){
+    player.moveTo(0,0);
+    sjs.setStage("game");
+    sjs.removeFromStage(player);
+    sjs.removeFromStage(background);
+    sjs.removeFromStage(menuBtn);
+    sjs.addKeysFromStage("design");
+    sjs.destroyAll();
+    sjs.addScreens();
+    sjs.addToStage(player);
+    sjs.addToStage(background);
+    sjs.addToStage(menuBtn);
+    sjs.addCopyOfArray(level);
+    score=0;
+    score_obj.setText("Score: 0");
+  });
+  playBtn.setWidth(designBtn.getWidth());
+  playBtn.center().offset(0,-40);
+
+  sjs.makeStage("win");
+  sjs.addToStage(title);
+  sjs.addToStage(playBtn);
+  sjs.addToStage(designBtn);
+  var winMsg = new sjs.Text("You Win!", 22, "blue");
+  winMsg.center();
+  winMsg.offset(0,-120);
+
+  sjs.onHit("player","flag", function(){ sjs.setStage("win"); player.stop(); }, 0, "game");
+
+  sjs.makeStage("gameover");
+  sjs.addToStage(title);
+  sjs.addToStage(playBtn);
+  sjs.addToStage(designBtn);
+  var gameOverMsg = new sjs.Text("You Died!",22,"red");
+  gameOverMsg.center();
+  gameOverMsg.offset(0,-120);
+
+  sjs.setStage("menu");
+  // end Level 3 content
+
+  var score_obj = new sjs.Text("Score: 0",22,"orange");
+  score_obj.makeGlobal();
+  score_obj.bottom().right();
+  score_obj.offset(-15,-15);
+
+
+}
+    </script>
+
+  </head>
+
+<body onload="start()"> <!-- The start function is called when the page is loaded  -->
+
+   <!-- This is where our game will be on the page -->
+   <div id="target" style="margin:auto; background-color: lightgrey;"></div>
+
+</body>
+</html>

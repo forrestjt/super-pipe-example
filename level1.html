@@ -1,0 +1,38 @@
+<!-- Game Design Project #3 ~ Super Pipe Example Level 1 -->
+<!-- Copyright (c) 2015 Simply Coding see LICENSE for usage information -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <title> Super Pipe Example </title>
+
+    <script src="simply.js"> </script>
+    <script>
+
+ function start()
+ {
+	sjs.open("target", 800, 500);
+
+	var background = new sjs.Image("images/field.jpg");
+	background.setSize(2500,sjs.getHeight());
+
+	var player = new sjs.Image("images/guy_left.png", 48, 66);
+	player.type="player";
+
+	player.setGravity();
+
+	sjs.keyDown(LEFT_KEY, function(){player.pushLeft(.5);});
+	sjs.keyDown(RIGHT_KEY, function(){player.pushRight(.5);});
+}
+    </script>
+
+  </head>
+
+<body onload="start()"> <!-- The start function is called when the page is loaded  -->
+
+   <!-- This is where our game will be on the page -->
+   <div id="target" style="margin:auto; background-color: lightgrey;"></div>
+
+</body>
+</html>
